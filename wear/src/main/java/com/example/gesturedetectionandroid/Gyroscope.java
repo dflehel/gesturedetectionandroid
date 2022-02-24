@@ -46,7 +46,7 @@ public class Gyroscope {
             public void onSensorChanged(SensorEvent sensorEvent) {
                 // check if listener is different from null
                 if (listener != null) {
-                  //  System.out.println(sensorEvent.timestamp+" Gyro"+sensorEvent.values[0]+" "+sensorEvent.values[1]+" "+sensorEvent.values[2]);
+                 //   System.out.println(sensorEvent.timestamp+" Gyro"+sensorEvent.values[0]+" "+sensorEvent.values[1]+" "+sensorEvent.values[2]);
                     // pass the three floats in listener on rotation of axis
                     listener.onRotation(sensorEvent.timestamp,sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
                 }

@@ -1,6 +1,7 @@
 package com.example.gesturedetectionandroid;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -62,34 +63,34 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        accelerometer = new Accelerometer(this);
-        gyroscope = new Gyroscope(this);
+       // accelerometer = new Accelerometer(this);
+       // gyroscope = new Gyroscope(this);
 
-        accelerometer.setListener(new Accelerometer.Listener() {
+       // accelerometer.setListener(new Accelerometer.Listener() {
             //on translation method of accelerometer
-            @Override
-            public void onTranslation(long timestamp,float tx, float ty, float ts) {
+         //   @Override
+         //   public void onTranslation(long timestamp,float tx, float ty, float ts) {
                 // set the color red if the device moves in positive x axis
                // System.out.println(System.currentTimeMillis()+" ACC:"+tx+","+ty+','+ts);
-                new SendThread(datapath, "acc:"+timestamp+","+tx+","+ty+","+ts+"\n").start();
-            }
-        });
+        //        new SendThread(datapath, "acc:"+timestamp+","+tx+","+ty+","+ts+"\n").start();
+         //   }
+       // });
 
         // create a listener for gyroscope
-        gyroscope.setListener(new Gyroscope.Listener() {
+       // gyroscope.setListener(new Gyroscope.Listener() {
             // on rotation method of gyroscope
-            @Override
-            public void onRotation(long timestemp,float rx, float ry, float rz) {
+         //   @Override
+          //  public void onRotation(long timestemp,float rx, float ry, float rz) {
                 // set the color green if the device rotates on positive z axis
               //  System.out.println(System.currentTimeMillis()+" GYR:" + rx + "," + ry + ',' + rz);
-                new SendThread(datapath, "gyr:"+timestemp+","+rx+","+ry+","+rz+"\n").start();
-            }
-        });
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
+           //     new SendThread(datapath, "gyr:"+timestemp+","+rx+","+ry+","+rz+"\n").start();
+          //  }
+        //});
+        //mGoogleApiClient = new GoogleApiClient.Builder(this)
+          //      .addApi(Wearable.API)
+            //    .addConnectionCallbacks(this)
+             //   .addOnConnectionFailedListener(this)
+              //  .build();
 
 
       //  mTextView = binding.text;
@@ -104,8 +105,11 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                     status.setBackgroundColor(Color.GREEN);
                     stopbutton.setEnabled(true);
                     startbutton.setEnabled(false);
-                    accelerometer.register();
-                    gyroscope.register();
+                    //accelerometer.register();
+                    //gyroscope.register();
+                Intent services = new Intent(MainActivity.this,ForgeGroundService.class);
+                startService(services);
+                Settings.service = services;
             }
         });
         stopbutton.setOnClickListener(new View.OnClickListener() {
@@ -114,10 +118,20 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                 startbutton.setEnabled(true);
                 stopbutton.setEnabled(false);
                 status.setBackgroundColor(Color.RED);
-                accelerometer.unregister();
-                gyroscope.unregister();
+                //accelerometer.unregister();
+                //gyroscope.unregister();
+                stopService(Settings.service);
+                Settings.service=null;
             }
         });
+        if (Settings.isrunning){
+            status.setBackgroundColor(Color.GREEN);
+            stopbutton.setEnabled(true);
+            startbutton.setEnabled(false);
+        }
+        else{
+
+        }
     }
 
 
@@ -126,9 +140,9 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     @Override
     protected void onStart(){
         super.onStart();
-        if (!mResolvingError) {
-                mGoogleApiClient.connect();
-            }
+       // if (!mResolvingError) {
+        //        mGoogleApiClient.connect();
+         //   }
     }
 
     private void resolveNode() {
@@ -207,53 +221,5 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     }
 
-    class SendThread extends Thread {
-        String path;
-        String message;
 
-        //constructor
-        SendThread(String p, String msg) {
-            path = p;
-            message = msg;
-        }
-
-        //sends the message via the thread.  this will send to all wearables connected, but
-        //since there is (should only?) be one, so no problem.
-        public void run() {
-            //first get all the nodes, ie connected wearable devices.
-            Task<List<Node>> nodeListTask =
-                    Wearable.getNodeClient(getApplicationContext()).getConnectedNodes();
-            try {
-                // Block on a task and get the result synchronously (because this is on a background
-                // thread).
-                List<Node> nodes = Tasks.await(nodeListTask);
-
-                //Now send the message to each device.
-                for (Node node : nodes) {
-                    Task<Integer> sendMessageTask =
-                            Wearable.getMessageClient(MainActivity.this).sendMessage(node.getId(), path, message.getBytes());
-
-                    try {
-                        // Block on a task and get the result synchronously (because this is on a background
-                        // thread).
-                        Integer result = Tasks.await(sendMessageTask);
-                      //  Log.v(TAG, "SendThread: message send to " + node.getDisplayName());
-
-                    } catch (ExecutionException exception) {
-                        Log.e(TAG, "Task failed: " + exception);
-
-                    } catch (InterruptedException exception) {
-                        Log.e(TAG, "Interrupt occurred: " + exception);
-                    }
-
-                }
-
-            } catch (ExecutionException exception) {
-                Log.e(TAG, "Task failed: " + exception);
-
-            } catch (InterruptedException exception) {
-                Log.e(TAG, "Interrupt occurred: " + exception);
-            }
-        }
-    }
 }
